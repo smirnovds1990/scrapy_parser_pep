@@ -9,15 +9,17 @@ class PepSpider(scrapy.Spider):
     start_urls = ['https://peps.python.org/']
 
     def parse(self, response):
-        links = response.css('a.pep reference internal::attr(href)')
-        print(links)
-    #     for link in links:
-    #         yield response.follow(link, callback=self.parse_pep)
+        links = response.css('a.pep::attr(href)')
+        for link in links:
+            yield response.follow(link, callback=self.parse_pep)
 
-    # def parse_pep(self, response):
-    #     data = {
-    #         'number': response.css('h1::text').get().split('–')[0].strip(),
-    #         'name': response.css('h1::text').get().split('–')[1].strip(),
-    #         'status': response.css('dt:contains("Status") + dd::text').get()
-    #     }
-    #     yield PepParseItem(data)
+    def parse_pep(self, response):
+        page_title = response.css('h1.page-title::text').get()
+        page_title = page_title.split(' – ')
+        data = {
+            'number': page_title[0],
+            'name': page_title[1],
+            'status': response.css('dt:contains("Status") + dd abbr::text')
+            .get()
+        }
+        yield PepParseItem(data)
